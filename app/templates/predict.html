@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">号码预测</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">输入预测号码</label>
+                        <input type="text" class="form-control" name="numbers" 
+                               placeholder="格式：01,02,03,04,05+06,07" required
+                               pattern="^(\d{2},){4}\d{2}\+\d{2},\d{2}$">
+                        <div class="form-text">
+                            前区输入5个01-35的号码，后区输入2个01-12的号码，用逗号分隔，前后区用加号分隔
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存预测</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">号码生成器</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">前区号码</label>
+                        <div id="frontNumbers" class="btn-group-vertical w-100">
+                            {% for i in range(1, 36) %}
+                            <input type="checkbox" class="btn-check" name="front" id="front{{ i }}" value="{{ '%02d'|format(i) }}">
+                            <label class="btn btn-outline-primary text-start" for="front{{ i }}">{{ '%02d'|format(i) }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">后区号码</label>
+                        <div id="backNumbers" class="btn-group-vertical w-100">
+                            {% for i in range(1, 13) %}
+                            <input type="checkbox" class="btn-check" name="back" id="back{{ i }}" value="{{ '%02d'|format(i) }}">
+                            <label class="btn btn-outline-danger text-start" for="back{{ i }}">{{ '%02d'|format(i) }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-success" onclick="generateNumbers()">生成号码</button>
+                    <button class="btn btn-secondary" onclick="clearSelection()">清空选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">历史预测记录</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>预测号码</th>
+                                <th>预测时间</th>
+                                <th>对应期号</th>
+                                <th>中奖状态</th>
+                                <th>中奖金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediction in predictions %}
+                            <tr>
+                                <td>
+                                    {% set front_numbers = prediction.numbers.split('+')[0].split(',') %}
+                                    {% set back_numbers = prediction.numbers.split('+')[1].split(',') %}
+                                    <span class="text-primary">{{ front_numbers|join(' ') }}</span>
+                                    <span class="text-danger">+ {{ back_numbers|join(' ') }}</span>
+                                </td>
+                                <td>{{ prediction.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ prediction.draw_number or '未开奖' }}</td>
+                                <td>
+                                    {% if prediction.is_hit %}
+                                    <span class="badge bg-success">中奖</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">未中奖</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ "{:,.2f}".format(prediction.prize_amount) if prediction.prize_amount > 0 else '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateNumbers() {
+    const frontChecked = document.querySelectorAll('input[name="front"]:checked');
+    const backChecked = document.querySelectorAll('input[name="back"]:checked');
+    
+    if (frontChecked.length !== 5 || backChecked.length !== 2) {
+        alert('请选择5个前区号码和2个后区号码');
+        return;
+    }
+    
+    const frontNums = Array.from(frontChecked).map(input => input.value).sort();
+    const backNums = Array.from(backChecked).map(input => input.value).sort();
+    
+    const numbers = frontNums.join(',') + '+' + backNums.join(',');
+    document.querySelector('input[name="numbers"]').value = numbers;
+}
+
+function clearSelection() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.checked = false;
+    });
+    document.querySelector('input[name="numbers"]').value = '';
+}
+</script>
+{% endblock %} 

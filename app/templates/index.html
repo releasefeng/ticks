@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">最新开奖结果</h4>
+                {% if current_user.is_authenticated %}
+                <div>
+                    <a href="{{ url_for('main.fetch_historical') }}" class="btn btn-success btn-sm me-2">获取历史数据</a>
+                    <a href="{{ url_for('main.fetch_latest') }}" class="btn btn-primary btn-sm">更新最新数据</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>期号</th>
+                                <th>开奖日期</th>
+                                <th>开奖号码</th>
+                                <th>奖池金额</th>
+                                <th>一等奖注数</th>
+                                <th>一等奖金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for draw in draws %}
+                            <tr>
+                                <td>{{ draw.draw_number }}</td>
+                                <td>{{ draw.draw_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% set front_numbers = draw.numbers.split('+')[0].split(',') %}
+                                    {% set back_numbers = draw.numbers.split('+')[1].split(',') %}
+                                    <span class="text-primary">{{ front_numbers|join(' ') }}</span>
+                                    <span class="text-danger">+ {{ back_numbers|join(' ') }}</span>
+                                </td>
+                                <td>{{ "{:,.2f}".format(draw.prize_pool) }}</td>
+                                <td>{{ draw.first_prize_num }}</td>
+                                <td>{{ "{:,.2f}".format(draw.first_prize_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">快速操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.analysis') }}" class="btn btn-outline-primary">查看数据分析</a>
+                    <a href="{{ url_for('main.predict') }}" class="btn btn-outline-success">预测下期号码</a>
+                    <a href="{{ url_for('main.statistics') }}" class="btn btn-outline-info">查看统计信息</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">系统说明</h5>
+            </div>
+            <div class="card-body">
+                <p>本系统提供以下功能：</p>
+                <ul>
+                    <li>实时开奖数据更新（每周一、三、六晚上21:30自动更新）</li>
+                    <li>历史数据统计分析</li>
+                    <li>智能号码预测</li>
+                    <li>个人投注记录</li>
+                    <li>中奖概率分析</li>
+                </ul>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> 系统会在每个开奖日（周一、三、六）晚上21:30自动更新数据。您也可以随时手动更新。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>登录后体验更多功能</h5>
+                <p class="mb-3">包括数据分析、智能预测等高级功能</p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary me-2">登录</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">注册</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

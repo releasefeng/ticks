@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- 左侧列：号码频率分析和热门组合 -->
+        <div class="col-md-6">
+            <!-- 号码频率分析 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#front-area">前区号码频率</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#back-area">后区号码频率</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="front-area">
+                            <div class="number-grid">
+                                {% for i in range(1, 36) %}
+                                {% set num = '%02d' % i %}
+                                {% set freq = front_freq.get(num, 0) %}
+                                <div class="number-box {% if freq > front_avg_freq %}hot{% endif %}">
+                                    <span class="number">{{ num }}</span>
+                                    <span class="frequency">{{ freq }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="back-area">
+                            <div class="number-grid">
+                                {% for i in range(1, 13) %}
+                                {% set num = '%02d' % i %}
+                                {% set freq = back_freq.get(num, 0) %}
+                                <div class="number-box {% if freq > back_avg_freq %}hot{% endif %}">
+                                    <span class="number">{{ num }}</span>
+                                    <span class="frequency">{{ freq }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 热门组合分析 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">热门组合分析</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>组合模式</th>
+                                    <th>出现次数</th>
+                                    <th>最近出现</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for combo in popular_combos %}
+                                <tr>
+                                    <td>{{ combo.pattern }}</td>
+                                    <td>{{ combo.count }}</td>
+                                    <td>{{ combo.last_appear }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据分析建议 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">数据分析建议</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">热门号码</h6>
+                                    <p class="card-text">
+                                        前区热门号码（前7）：{{ analysis_suggestions.hot_numbers.front|join(', ') }}<br>
+                                        后区热门号码（前5）：{{ analysis_suggestions.hot_numbers.back|join(', ') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">冷门号码</h6>
+                                    <p class="card-text">
+                                        前区冷门号码（前7）：{{ analysis_suggestions.cold_numbers.front|join(', ') }}<br>
+                                        后区冷门号码（前5）：{{ analysis_suggestions.cold_numbers.back|join(', ') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p class="card-text">{{ analysis_suggestions.pattern_analysis }}</p>
+                    </div>
+                    
+                    {% if analysis_suggestions.cold_combinations %}
+                    <div class="mt-4">
+                        <h6>冷门号码组合（符合最常见模式）</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>前区号码</th>
+                                        <th>后区号码</th>
+                                        <th>组合模式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for combo in analysis_suggestions.cold_combinations %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ combo.front|join(', ') }}</td>
+                                        <td>{{ combo.back|join(', ') }}</td>
+                                        <td>{{ combo.pattern }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- 在冷门号码统计后添加组合历史统计 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">冷门号码组合历史统计</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>统计项目</th>
+                                                    <th>数值</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>中奖率</td>
+                                                    <td>{{ "%.2f"|format(analysis_suggestions.cold_combination_stats.winning_rate) }}%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>中奖次数</td>
+                                                    <td>{{ analysis_suggestions.cold_combination_stats.winning_count }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>总投入（元）</td>
+                                                    <td>{{ "%.2f"|format(analysis_suggestions.cold_combination_stats.total_investment) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>总奖金（元）</td>
+                                                    <td>{{ "%.2f"|format(analysis_suggestions.cold_combination_stats.total_prize) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>投资回报率</td>
+                                                    <td>{{ "%.2f"|format(analysis_suggestions.cold_combination_stats.roi) }}%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧列：奖金趋势和数据分析建议 -->
+        <div class="col-md-6">
+            <!-- 奖金趋势图 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">一等奖奖金趋势（万元）</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="prizeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 数据分析建议 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">数据分析建议</h5>
+                </div>
+                <div class="card-body">
+                    <!-- 热门号码提示 -->
+                    <div class="alert alert-info">
+                        <h6>当前热门号码</h6>
+                        <p>前区：{% for num, freq in front_hot_numbers[:5] %}{{ num }}({{ freq }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+                        <p>后区：{% for num, freq in back_hot_numbers[:3] %}{{ num }}({{ freq }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+                    </div>
+
+                    <!-- 冷门号码提示 -->
+                    <div class="alert alert-warning">
+                        <h6>当前冷门号码（{{ cold_threshold }}期未出现）</h6>
+                        <p>前区：{% for num, periods in front_cold_numbers[:5] if periods >= cold_threshold %}{{ num }}({{ periods }}期){% if not loop.last %}, {% endif %}{% endfor %}</p>
+                        <p>后区：{% for num, periods in back_cold_numbers[:3] if periods >= cold_threshold %}{{ num }}({{ periods }}期){% if not loop.last %}, {% endif %}{% endfor %}</p>
+                    </div>
+
+                    <!-- 添加冷门号码统计信息 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">冷门号码统计</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- 前区冷门号码统计 -->
+                                <div class="col-md-6">
+                                    <h6>前区冷门号码（前5）</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>号码</th>
+                                                    <th>未出现期数</th>
+                                                    <th>中奖概率</th>
+                                                    <th>赔率</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stat in analysis_suggestions.cold_stats.front %}
+                                                <tr>
+                                                    <td>{{ stat.number }}</td>
+                                                    <td>{{ stat.cold_periods }}</td>
+                                                    <td>{{ "%.2f"|format(stat.probability * 100) }}%</td>
+                                                    <td>{{ stat.odds }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- 后区冷门号码统计 -->
+                                <div class="col-md-6">
+                                    <h6>后区冷门号码（前3）</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>号码</th>
+                                                    <th>未出现期数</th>
+                                                    <th>中奖概率</th>
+                                                    <th>赔率</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stat in analysis_suggestions.cold_stats.back %}
+                                                <tr>
+                                                    <td>{{ stat.number }}</td>
+                                                    <td>{{ stat.cold_periods }}</td>
+                                                    <td>{{ "%.2f"|format(stat.probability * 100) }}%</td>
+                                                    <td>{{ stat.odds }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 选号建议 -->
+                    <div class="mt-3">
+                        <h6>选号建议：</h6>
+                        <ul>
+                            <li>建议选择2-3个热门号码搭配2-3个平均频率号码</li>
+                            <li>可以考虑选择1个已经连续{{ cold_threshold }}期未出现的冷门号码</li>
+                            <li>注意参考热门组合特征，避免选择过于极端的组合</li>
+                            <li>建议关注奖金趋势，在奖池累积较多时适当增加投注</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 在分析结果区域之前添加筛选条件选择 -->
+<div class="filter-options mb-4">
+    <form method="POST" action="{{ url_for('main.analysis') }}">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="even_majority" id="even_majority" 
+                   {{ 'checked' if analysis_suggestions.even_majority else '' }}>
+            <label class="form-check-label" for="even_majority">
+                前区偶数多于奇数
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">应用筛选条件</button>
+    </form>
+</div>
+
+<!-- 原有的分析结果区域 -->
+<div class="analysis-results">
+    <h4>分析建议</h4>
+    <p>{{ analysis_suggestions.pattern_analysis }}</p>
+    
+    <!-- ... rest of the existing code ... -->
+</div>
+
+<!-- 添加必要的样式 -->
+<style>
+.number-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.number-box {
+    text-align: center;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+.number-box.hot {
+    background-color: #ffeeba;
+    border-color: #ffc107;
+}
+
+.number {
+    display: block;
+    font-weight: bold;
+}
+
+.frequency {
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+}
+</style>
+
+<!-- 添加Chart.js并绘制奖金趋势图 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('prizeChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ draw_dates|tojson }},
+            datasets: [{
+                label: '一等奖奖金',
+                data: {{ prize_amounts|tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

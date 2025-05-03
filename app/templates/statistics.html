@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">总预测次数</h6>
+                <h2 class="mb-0">{{ stats.total_predictions }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">中奖次数</h6>
+                <h2 class="mb-0">{{ stats.winning_predictions }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">中奖率</h6>
+                <h2 class="mb-0">{{ "%.2f"|format(stats.win_rate) }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">收益统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>总投注金额</th>
+                                <td>¥{{ "{:,.2f}".format(stats.total_predictions * 2) }}</td>
+                            </tr>
+                            <tr>
+                                <th>总中奖金额</th>
+                                <td>¥{{ "{:,.2f}".format(stats.total_prize) }}</td>
+                            </tr>
+                            <tr>
+                                <th>净收益</th>
+                                <td class="{{ 'text-success' if stats.total_prize > stats.total_predictions * 2 else 'text-danger' }}">
+                                    ¥{{ "{:,.2f}".format(stats.total_prize - stats.total_predictions * 2) }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>投资回报率</th>
+                                <td class="{{ 'text-success' if stats.total_prize > stats.total_predictions * 2 else 'text-danger' }}">
+                                    {{ "%.2f"|format((stats.total_prize / (stats.total_predictions * 2) * 100) if stats.total_predictions > 0 else 0) }}%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">投注建议</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">根据您的投注数据分析：</h6>
+                    <ul>
+                        {% if stats.win_rate > 10 %}
+                        <li>您的中奖率高于平均水平，建议保持当前选号策略</li>
+                        {% else %}
+                        <li>建议参考数据分析页面的热门号码</li>
+                        {% endif %}
+                        
+                        {% if stats.total_prize > stats.total_predictions * 2 %}
+                        <li>您目前处于盈利状态，建议控制投注规模</li>
+                        {% else %}
+                        <li>建议适当减少投注频率，关注重点号码</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <strong>风险提示：</strong>
+                    <ul>
+                        <li>购彩金额应当与个人收入水平相匹配</li>
+                        <li>不要将购彩作为投资手段</li>
+                        <li>理性购彩，量力而行</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

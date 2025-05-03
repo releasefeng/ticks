@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">号码推荐</h4>
+                </div>
+                <div class="card-body">
+                    <!-- 选号策略表单 -->
+                    <form method="POST" class="mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <label for="strategy" class="form-label">选号策略</label>
+                                <select name="strategy" id="strategy" class="form-select">
+                                    {% for key, name in strategies.items() %}
+                                    <option value="{{ key }}" {% if key == selected_strategy %}selected{% endif %}>
+                                        {{ name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="num_suggestions" class="form-label">推荐注数</label>
+                                <select name="num_suggestions" id="num_suggestions" class="form-select">
+                                    {% for n in [5, 10, 15, 20] %}
+                                    <option value="{{ n }}" {% if n == num_suggestions %}selected{% endif %}>
+                                        {{ n }}注
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary">生成推荐号码</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- 推荐号码展示 -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>推荐号码</th>
+                                    <th>选号策略</th>
+                                    <th>推荐理由</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sugg in suggestions %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                        {% set front_numbers = sugg.numbers.split('+')[0].split(',') %}
+                                        {% set back_numbers = sugg.numbers.split('+')[1].split(',') %}
+                                        <span class="text-primary">{{ front_numbers|join(' ') }}</span>
+                                        <span class="text-danger">+ {{ back_numbers|join(' ') }}</span>
+                                    </td>
+                                    <td>{{ strategies[sugg.strategy_name] }}</td>
+                                    <td>{{ sugg.reason }}</td>
+                                    <td>
+                                        <form action="{{ url_for('main.predict') }}" method="POST" style="display: inline;">
+                                            <input type="hidden" name="numbers" value="{{ sugg.numbers }}">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                使用此号码
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 选号说明 -->
+                    <div class="mt-4">
+                        <h5>选号策略说明：</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">智能选号</h6>
+                                        <p class="card-text">综合考虑热门号码、冷门号码和平衡选号三种策略，根据历史数据智能分配权重。</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">热门号码</h6>
+                                        <p class="card-text">优先选择最近100期中出现频率较高的号码，适合追热策略。</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">冷门号码</h6>
+                                        <p class="card-text">优先选择最近100期中较少出现或长期未出现的号码，适合追冷策略。</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">平衡选号</h6>
+                                        <p class="card-text">同时考虑热门号码和冷门号码，保持平衡，是一种相对稳健的选号策略。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %} 
